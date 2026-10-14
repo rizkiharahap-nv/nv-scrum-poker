@@ -1,0 +1,37 @@
+# Scrum Poker — Substrait (single Node pod, SPA + WebSocket, 1 replica required).
+FROM node:22-bookworm-slim AS build
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY apps/web/package.json apps/web/
+COPY apps/server/package.json apps/server/
+COPY packages/room/package.json packages/room/
+COPY packages/protocol/package.json packages/protocol/
+
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+FROM node:22-bookworm-slim AS runtime
+
+RUN groupadd --system app && useradd --system --gid app --no-create-home app
+
+WORKDIR /app
+
+COPY --from=build --chown=app:app /app /app
+
+USER app
+
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV STATIC_DIR=/app/apps/web/dist
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||8080)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+CMD ["npm", "run", "start"]

@@ -1,0 +1,20 @@
+{
+  "name": "@scrum-poker/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@scrum-poker/protocol": "0.1.0",
+    "@scrum-poker/room": "0.1.0",
+    "tsx": "^4.23.12",
+    "ws": "^8.21.3"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.18.1"
+  }
+}

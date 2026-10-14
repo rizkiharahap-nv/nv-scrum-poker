@@ -1,0 +1,11 @@
+{
+  "name": "spike-001-realtime-transport",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "Spike 001: validate Socket.IO as the realtime transport for Scrum Poker (walking-skeleton round trip).",
+  "dependencies": {
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
+  }
+}

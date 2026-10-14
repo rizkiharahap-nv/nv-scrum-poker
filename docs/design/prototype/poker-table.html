@@ -1,0 +1,1832 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Scrum Hold'em Poker — poker-table prototype</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --ink: #f3efe6;
+        --muted: #b8a99a;
+        --faint: #8a7b6d;
+        --red: #dc2626;
+        --red-dark: #991b1b;
+        --felt: #177245;
+        --felt-dark: #0f5132;
+        --felt-light: #1e8a52;
+        --gold: #f59e0b;
+        --card-fs: 24px;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+          Arial, sans-serif;
+        background:
+          radial-gradient(
+            ellipse 72% 58% at 50% 46%,
+            rgba(255, 214, 140, 0.34) 0%,
+            rgba(255, 176, 80, 0.12) 26%,
+            transparent 58%
+          ),
+          radial-gradient(
+            ellipse 90% 70% at 50% 48%,
+            #24180f 0%,
+            #0c0907 58%,
+            #050403 100%
+          );
+        color: var(--ink);
+        min-height: 100vh;
+        overflow-x: auto;
+      }
+
+      /* ---------- header ---------- */
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 12px 20px;
+        background: #140f0c;
+        border-bottom: 1px solid rgba(245, 158, 11, 0.22);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .logo {
+        font-size: 20px;
+        font-weight: 900;
+        color: var(--red);
+      }
+      .brand-name {
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+      }
+      .brand-accent {
+        color: var(--red);
+        font-style: italic;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .badge.voting {
+        background: #14532d;
+        color: #86efac;
+      }
+      .badge.revealed {
+        background: #2a2118;
+        color: #e7d3a3;
+      }
+      .badge .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .invite {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+      .invite-url {
+        font-size: 12px;
+        color: var(--muted);
+        background: #1c1410;
+        border: 1px solid #3a2a1e;
+        border-radius: 999px;
+        padding: 6px 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 320px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        cursor: pointer;
+        font-weight: 700;
+        font-family: inherit;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+      }
+      .btn:active {
+        transform: translateY(1px);
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--muted);
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      .btn-ghost:hover {
+        background: #2a2118;
+        color: var(--ink);
+      }
+
+      /* ---------- stage / table ---------- */
+      .stage {
+        position: relative;
+        max-width: 1080px;
+        min-width: 780px;
+        margin: 0 auto;
+        padding: 40px 24px 60px;
+      }
+
+      .prototype-note {
+        text-align: center;
+        font-size: 12px;
+        color: var(--faint);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 26px;
+      }
+
+      /* 250px reserved so the chips hanging off the left/right caps never clip */
+      .table-wrap {
+        position: relative;
+        width: min(100% - 250px, 780px);
+        margin: 104px auto 122px;
+      }
+
+      .table {
+        position: relative;
+        z-index: 1;
+        border-radius: 999px;
+        aspect-ratio: 2.35 / 1;
+        background:
+          repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.07) 0 2px,
+            transparent 2px 7px
+          ),
+          linear-gradient(170deg, #b9844f 0%, #96602f 45%, #75471f 100%);
+        padding: 16px;
+        box-shadow:
+          0 0 90px 18px rgba(255, 200, 110, 0.16),
+          0 24px 60px rgba(0, 0, 0, 0.45),
+          inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+          inset 0 3px 8px rgba(0, 0, 0, 0.35);
+      }
+      .felt {
+        position: relative;
+        height: 100%;
+        width: 100%;
+        border-radius: 999px;
+        background: radial-gradient(
+          ellipse at 50% 46%,
+          #2aa05e 0%,
+          var(--felt-light) 28%,
+          var(--felt) 62%,
+          var(--felt-dark) 100%
+        );
+        box-shadow: inset 0 6px 18px rgba(0, 0, 0, 0.25);
+        overflow: hidden;
+      }
+      .felt::before {
+        /* inner betting ring */
+        content: "";
+        position: absolute;
+        inset: 9%;
+        border: 2px dashed rgba(255, 255, 255, 0.22);
+        border-radius: 999px;
+        pointer-events: none;
+      }
+      .felt::after {
+        /* center oval line */
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 46%;
+        aspect-ratio: 2.35/1;
+        transform: translate(-50%, -50%);
+        border: 1.5px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        pointer-events: none;
+      }
+
+      /* ---------- seats around the table ---------- */
+      .seats-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 5;
+      }
+
+      /* seat chip: big avatar with a nameplate and role badges overlapping it */
+      .seat {
+        position: absolute;
+        z-index: 5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 104px;
+        transform: translate(-50%, -50%);
+        transition:
+          left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+          top 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: auto;
+      }
+
+      .avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 19px;
+        letter-spacing: -0.02em;
+        color: hsl(var(--hue, 240) 55% 30%);
+        background: linear-gradient(
+          160deg,
+          hsl(var(--hue, 240) 90% 94%),
+          hsl(var(--hue, 240) 66% 79%)
+        );
+        box-shadow:
+          0 0 0 3px #fff,
+          0 0 0 4.5px rgba(15, 23, 42, 0.12),
+          0 6px 14px rgba(15, 23, 42, 0.22);
+        position: relative;
+      }
+      /* host ring wins over the self ring when the host is also you */
+      .seat.is-self .avatar {
+        box-shadow:
+          0 0 0 3px #fff,
+          0 0 0 5px #6366f1,
+          0 6px 16px rgba(67, 56, 202, 0.3);
+      }
+      .seat.is-host .avatar {
+        box-shadow:
+          0 0 0 3px #fff,
+          0 0 0 5px var(--gold),
+          0 6px 16px rgba(180, 83, 9, 0.3);
+      }
+
+      /* nameplate tucks under the avatar so it overlaps the circle */
+      .plate {
+        position: relative;
+        z-index: 2;
+        margin-top: -12px;
+        min-width: 76px;
+        max-width: 104px;
+        padding: 5px 12px 6px;
+        border-radius: 10px;
+        text-align: center;
+        background: linear-gradient(180deg, #2b374d, #131c2c);
+        box-shadow:
+          0 4px 10px rgba(15, 23, 42, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        transition: box-shadow 0.2s ease;
+      }
+      .seat.voted .plate {
+        box-shadow:
+          0 4px 10px rgba(15, 23, 42, 0.35),
+          inset 0 0 0 1.5px rgba(34, 197, 94, 0.8);
+      }
+      .plate .name {
+        display: block;
+        font-size: 11.5px;
+        font-weight: 800;
+        line-height: 1.25;
+        color: #fff;
+        max-width: 82px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* role badges sit on the avatar's lower edge, stopping just above the
+     nameplate so they never crowd the name */
+      .tag {
+        position: absolute;
+        top: 27px;
+        z-index: 3;
+        font-size: 8.5px;
+        font-weight: 900;
+        line-height: 1.5;
+        letter-spacing: 0.07em;
+        text-transform: uppercase;
+        color: #fff;
+        padding: 1px 7px;
+        border-radius: 999px;
+        box-shadow:
+          0 0 0 1.5px rgba(19, 28, 44, 0.9),
+          0 2px 5px rgba(15, 23, 42, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.3);
+      }
+      .tag.host {
+        left: -2px;
+        top: 33px;
+        background: linear-gradient(180deg, #fbbf24, #d97706);
+      }
+      .tag.you {
+        right: -2px;
+        top: 33px;
+        background: linear-gradient(180deg, #818cf8, #4338ca);
+      }
+
+      /* ---------- cards on the felt ---------- */
+      .oncard {
+        position: absolute;
+        z-index: 3;
+        width: 48px;
+        height: 68px;
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+        transition:
+          opacity 0.35s ease,
+          left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+          top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+          transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: none;
+      }
+      .oncard.show {
+        opacity: 1;
+      }
+
+      .cards-layer {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        z-index: 5;
+      }
+      .oncard.flip {
+        animation: oncard-flip 0.36s ease;
+      }
+      @keyframes oncard-flip {
+        0% {
+          transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scaleX(1);
+        }
+        48% {
+          transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scaleX(0.08);
+        }
+        100% {
+          transform: translate(-50%, -50%) rotate(var(--rot, 0deg)) scaleX(1);
+        }
+      }
+
+      /* table cards are smaller than hand cards, so scale the type with the card */
+      .oncard .card-front .value,
+      .oncard .card-front .corner {
+        font-size: 17px;
+      }
+
+      /* card backs — red, like a real closed playing card */
+      .card-back {
+        width: 100%;
+        height: 100%;
+        border-radius: 9px;
+        background:
+          repeating-linear-gradient(
+            45deg,
+            rgba(255, 255, 255, 0.1) 0 2.5px,
+            transparent 2.5px 6px
+          ),
+          repeating-linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, 0.1) 0 2.5px,
+            transparent 2.5px 6px
+          ),
+          linear-gradient(155deg, #ef4444, var(--red) 40%, var(--red-dark));
+        border: 2px solid #fff;
+        box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+        position: relative;
+      }
+      .card-back::before {
+        content: "♦";
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 20px;
+      }
+      .card-back::after {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border: 1.5px solid rgba(255, 255, 255, 0.55);
+        border-radius: 5px;
+      }
+
+      /* card fronts — white, real playing-card face */
+      .card-front {
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        border: 1.5px solid #cbd5e1;
+        border-radius: 9px;
+        box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      }
+      .card-front .value {
+        font-size: var(--card-fs);
+        font-weight: 800;
+        line-height: 1;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+      .card-front .corner {
+        position: absolute;
+        top: 3px;
+        left: 5px;
+        font-size: var(--card-fs);
+        font-weight: 800;
+        line-height: 1.1;
+        text-align: center;
+      }
+      .card-front .corner.br {
+        top: auto;
+        left: auto;
+        right: 5px;
+        bottom: 3px;
+        transform: rotate(180deg);
+      }
+      .card-front.pass .value {
+        font-size: 34px;
+        line-height: 1;
+      }
+      .card-front.pass .corner {
+        display: none;
+      }
+      .red {
+        color: #b91c1c;
+      }
+      .black {
+        color: #111827;
+      }
+
+      /* ---------- table center: dealer plaque ---------- */
+      .center {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 4;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        width: 46%;
+        text-align: center;
+      }
+
+      .progress {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.92);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+      }
+      .progress b {
+        color: #fff;
+        font-size: 16px;
+      }
+
+      .chip-btn {
+        width: auto;
+        height: auto;
+        min-width: 128px;
+        padding: 9px 26px;
+        border-radius: 8px;
+        background: linear-gradient(
+          180deg,
+          #fff6d8 0%,
+          #f0d48a 46%,
+          #d4a017 100%
+        );
+        border: 1.5px solid #8a6914;
+        box-shadow:
+          0 4px 12px rgba(0, 0, 0, 0.35),
+          inset 0 1px 0 rgba(255, 255, 255, 0.7),
+          inset 0 -1px 0 rgba(120, 80, 10, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-family: inherit;
+        transition:
+          transform 0.12s ease,
+          filter 0.15s,
+          box-shadow 0.15s;
+      }
+      .chip-btn:hover:not(:disabled) {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
+      }
+      .chip-btn:disabled {
+        cursor: not-allowed;
+        filter: grayscale(0.85);
+        opacity: 0.55;
+      }
+      .chip-btn span {
+        font-weight: 900;
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: #5c1a12;
+      }
+
+      /* ---------- below table: hand OR revealed spread ---------- */
+      .deck {
+        text-align: center;
+      }
+      /* ---------- results: bottom drawer over the hand ---------- */
+      .results {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 40;
+        width: 100%;
+        text-align: center;
+        background: #1a140f;
+        border: 1px solid rgba(245, 158, 11, 0.38);
+        border-bottom: 0;
+        border-radius: 20px 20px 0 0;
+        padding: 8px 24px 28px;
+        box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.55);
+        transform: translateY(110%);
+        transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: none;
+      }
+      .results.is-open {
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+      .results-handle {
+        width: 42px;
+        height: 4px;
+        border-radius: 999px;
+        background: #5c4a3a;
+        margin: 4px auto 12px;
+      }
+      .results-title {
+        margin: 0;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--gold);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .oncard.flip {
+          animation: none;
+        }
+      }
+      .results-title.ok {
+        color: #4ade80;
+      }
+      .results-title.no {
+        color: #f87171;
+      }
+      .results-sub {
+        margin: 6px 0 0;
+        font-size: 20px;
+        font-weight: 800;
+        color: var(--ink);
+      }
+      .results-row {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        gap: 36px;
+        padding-top: 12px;
+      }
+      .spread {
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: 28px;
+      }
+      .spread-col {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+      .spread-bar {
+        width: 8px;
+        height: var(--h, 16px);
+        border-radius: 4px;
+        background: linear-gradient(180deg, #fbbf24, #b45309);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+      }
+      .spread-card {
+        width: 56px;
+        height: 80px;
+      }
+      .spread-card .card-front .value {
+        font-size: 22px;
+      }
+      .spread-card .card-front .corner {
+        font-size: 16px;
+      }
+      .spread-card .card-front.pass .value {
+        font-size: 22px;
+      }
+      .spread-count {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+      }
+      .agree {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        min-width: 100px;
+        padding-bottom: 22px;
+      }
+      .agree-label {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--faint);
+      }
+      .agree-ring {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        /* Arc color tracks agreement: 0% red → 50% gold → 100% green */
+        --agree: hsl(calc(var(--pct, 0) * 1.2) 72% 55%);
+        background: conic-gradient(
+          var(--agree) calc(var(--pct, 0) * 1%),
+          #2a2118 0
+        );
+        display: grid;
+        place-items: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+      }
+      .agree-ring span {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: #140f0c;
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+        font-weight: 800;
+        color: var(--agree);
+      }
+      .deck-label {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--faint);
+        margin: 0;
+      }
+      .deck-head {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+      .hide-pick {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        cursor: pointer;
+        user-select: none;
+      }
+      .hide-pick input {
+        accent-color: var(--gold);
+        width: 14px;
+        height: 14px;
+        margin: 0;
+      }
+      /* the hand is fanned on an arc, the way you would hold the cards */
+      /* the top padding is headroom for the lifted/selected card */
+      .hand {
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 180px;
+        padding-top: 40px;
+      }
+      /* the button is the hit target and stays put — only the face lifts.
+     lifting the whole button used to move the bottom edge off the cursor
+     and flicker hover on/off */
+      .hand-card {
+        width: 80px;
+        height: 116px;
+        margin-left: -34px;
+        border: 0;
+        padding: 0;
+        background: transparent;
+        border-radius: 11px;
+        cursor: pointer;
+        position: relative;
+        transform-origin: 50% 210%;
+        transform: rotate(var(--fan, 0deg));
+      }
+      .hand-card:first-child {
+        margin-left: 0;
+      }
+      .hand-card > * {
+        width: 100%;
+        height: 100%;
+        transform: translateY(var(--lift, 0px));
+        transition:
+          transform 0.18s ease,
+          box-shadow 0.18s ease;
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+        pointer-events: none;
+      }
+      .hand-card:hover {
+        z-index: 10;
+      }
+      .hand-card:hover > * {
+        transform: translateY(calc(var(--lift, 0px) - 18px)) scale(1.05);
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.28);
+      }
+      .hand-card.selected {
+        z-index: 20;
+      }
+      .hand-card.selected > * {
+        transform: translateY(calc(var(--lift, 0px) - 30px)) scale(1.07);
+        box-shadow:
+          0 0 0 3px var(--gold),
+          0 14px 28px rgba(15, 23, 42, 0.3);
+      }
+      .deck.is-concealed .hand-card > * {
+        transition: none;
+      }
+      .deck.is-concealed .hand-card:hover,
+      .deck.is-concealed .hand-card.selected {
+        z-index: auto;
+      }
+      .deck.is-concealed .hand-card:hover > *,
+      .deck.is-concealed .hand-card.selected > * {
+        transform: translateY(var(--lift, 0px));
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+      }
+      /* type scales with the bigger hand cards */
+      .hand-card .card-front {
+        border-radius: 11px;
+      }
+      .hand-card .card-front .value {
+        font-size: 30px;
+      }
+      .hand-card .card-front .corner {
+        font-size: 26px;
+      }
+      .hand-card .card-front.pass .value {
+        font-size: 40px;
+      }
+      .deck-hint {
+        margin-top: 14px;
+        font-size: 13px;
+        color: var(--muted);
+        min-height: 18px;
+      }
+      .deck-hint b {
+        color: var(--ink);
+      }
+
+      /* ---------- player count tester ---------- */
+      .player-controls {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        margin: 8px 0 30px;
+      }
+      .pc-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 2px solid #3a2a1e;
+        background: #1c1410;
+        color: var(--ink);
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 1;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          background 0.15s,
+          transform 0.1s;
+      }
+      .pc-btn:hover:not(:disabled) {
+        background: #2a2118;
+        transform: scale(1.06);
+      }
+      .pc-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .pc-count {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--muted);
+      }
+      .pc-count b {
+        color: var(--ink);
+        font-size: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">🂠</span>
+        <span class="brand-name"
+          >Scrum <span class="brand-accent">Hold'em</span> Poker</span
+        >
+        <span id="phaseBadge" class="badge voting"
+          ><span class="dot"></span>Voting</span
+        >
+      </div>
+      <div class="invite">
+        <span class="invite-url">https://poker.team/482913</span>
+        <button id="copyBtn" class="btn btn-ghost" type="button">
+          Copy link
+        </button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <p class="prototype-note">
+        Prototype — poker table layout · plain HTML + CSS + JS
+      </p>
+
+      <div class="table-wrap">
+        <div class="table">
+          <div class="felt">
+            <div class="center" id="center"></div>
+            <div class="cards-layer" id="cardsLayer"></div>
+          </div>
+        </div>
+
+        <div class="seats-layer" id="seatsLayer"></div>
+      </div>
+
+      <div class="player-controls">
+        <button
+          id="removePlayer"
+          class="pc-btn"
+          type="button"
+          aria-label="Remove a player"
+        >
+          −
+        </button>
+        <span class="pc-count"><b id="playerCount">7</b> players</span>
+        <button
+          id="addPlayer"
+          class="pc-btn"
+          type="button"
+          aria-label="Add a player"
+        >
+          +
+        </button>
+      </div>
+
+      <div id="belowTable">
+        <div class="deck" id="deck">
+          <div class="deck-head">
+            <p class="deck-label">Your hand</p>
+            <label class="hide-pick">
+              <input id="hideSelected" type="checkbox" />
+              Hide selected card
+            </label>
+          </div>
+          <div class="hand" id="hand"></div>
+          <p class="deck-hint" id="deckHint">
+            Pick a card to vote — your card lands face-down on the table.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <aside
+      id="resultsDrawer"
+      class="results"
+      aria-hidden="true"
+      aria-label="Round result"
+    >
+      <div class="results-handle" aria-hidden="true"></div>
+      <div id="resultsBody"></div>
+    </aside>
+
+    <audio id="shuffleSfx" src="shuffle.mp3" preload="auto"></audio>
+    <audio id="revealSfx" src="reveal.mp3" preload="auto"></audio>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var SUITS = {
+          1: "♠",
+          2: "♥",
+          3: "♣",
+          5: "♦",
+          8: "♠",
+          13: "♥",
+          21: "♣",
+        };
+        var DECK = [1, 2, 3, 5, 8, 13, 21];
+        var PASS = "coffee";
+        var hideSelected = false;
+        var pendingFlip = false;
+        var flipTimers = [];
+
+        var state = {
+          phase: "voting",
+          myVote: null,
+          // array order = join order = clockwise seat order around the table
+          participants: [
+            {
+              id: "p1",
+              name: "Rizki",
+              host: true,
+              self: false,
+              voted: false,
+              value: null,
+            },
+            {
+              id: "p2",
+              name: "Maya",
+              host: false,
+              self: true,
+              voted: false,
+              value: null,
+            },
+            {
+              id: "p3",
+              name: "Dedi",
+              host: false,
+              self: false,
+              voted: false,
+              value: null,
+            },
+            {
+              id: "p4",
+              name: "Sari",
+              host: false,
+              self: false,
+              voted: false,
+              value: null,
+            },
+            {
+              id: "p5",
+              name: "Budi",
+              host: false,
+              self: false,
+              voted: false,
+              value: null,
+            },
+            {
+              id: "p6",
+              name: "Tono",
+              host: false,
+              self: false,
+              voted: false,
+              value: null,
+            },
+            {
+              id: "p7",
+              name: "Wulan",
+              host: false,
+              self: false,
+              voted: false,
+              value: null,
+            },
+          ],
+        };
+
+        function selfP() {
+          return (
+            state.participants.find(function (p) {
+              return p.self;
+            }) ||
+            state.participants.find(function (p) {
+              return p.host;
+            })
+          );
+        }
+        function votedCount() {
+          return state.participants.filter(function (p) {
+            return p.voted;
+          }).length;
+        }
+        function totalCount() {
+          return state.participants.length;
+        }
+        function suitColor(s) {
+          return s === "♥" || s === "♦" ? "red" : "black";
+        }
+        function esc(s) {
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        function initials(name) {
+          var parts = name.trim().split(/\s+/).filter(Boolean);
+          if (!parts.length) return "?";
+          var first = parts[0].charAt(0);
+          var last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+          return (first + last).toUpperCase();
+        }
+
+        // stable per-name avatar hue so a seat keeps its colour across re-renders
+        function hueFor(name) {
+          var h = 0;
+          for (var i = 0; i < name.length; i++)
+            h = (h * 31 + name.charCodeAt(i)) % 360;
+          return h;
+        }
+
+        function cardBackHTML() {
+          return '<div class="card-back"></div>';
+        }
+
+        function cardFrontHTML(value) {
+          if (value === PASS) {
+            return '<div class="card-front pass"><span class="value black">☕</span></div>';
+          }
+          var s = SUITS[value] || "♠";
+          var cls = suitColor(s);
+          return (
+            '<div class="card-front">' +
+            '<span class="corner ' +
+            cls +
+            '">' +
+            s +
+            "</span>" +
+            '<span class="value ' +
+            cls +
+            '">' +
+            value +
+            "</span>" +
+            '<span class="corner br ' +
+            cls +
+            '">' +
+            s +
+            "</span>" +
+            "</div>"
+          );
+        }
+
+        function seatInnerHTML(p) {
+          return (
+            '<div class="avatar">' +
+            esc(initials(p.name)) +
+            "</div>" +
+            '<div class="plate"><span class="name" title="' +
+            esc(p.name) +
+            '">' +
+            esc(p.name) +
+            "</span></div>" +
+            (p.host ? '<span class="tag host">Host</span>' : "") +
+            (p.self ? '<span class="tag you">You</span>' : "")
+          );
+        }
+
+        /**
+         * Seats are keyed by participant id so joiners/leavers only add or remove one
+         * node — the survivors keep their DOM element and glide to their new spot via
+         * the CSS transition instead of being rebuilt at the new position.
+         */
+        function renderSeats() {
+          var layer = document.getElementById("seatsLayer");
+          var g = geometry(
+            layer.parentElement.offsetWidth,
+            layer.parentElement.offsetHeight,
+          );
+          var n = state.participants.length;
+          var live = {};
+
+          state.participants.forEach(function (p, i) {
+            live[p.id] = true;
+            var el = layer.querySelector('.seat[data-id="' + p.id + '"]');
+            var isNew = !el;
+            if (isNew) {
+              el = document.createElement("div");
+              el.setAttribute("data-id", p.id);
+              el.style.setProperty("--hue", hueFor(p.name));
+              el.innerHTML = seatInnerHTML(p);
+            }
+            el.className =
+              "seat" +
+              (p.host ? " is-host" : "") +
+              (p.self ? " is-self" : "") +
+              (p.voted ? " voted" : "");
+            placeSeat(el, i, n, g);
+            // position first, then attach: a brand-new seat has no previous
+            // left/top to transition from, so it appears in place
+            if (isNew) layer.appendChild(el);
+          });
+
+          dropStale(layer, live);
+        }
+
+        function dropStale(layer, live) {
+          Array.prototype.slice.call(layer.children).forEach(function (el) {
+            if (!live[el.getAttribute("data-id")]) el.remove();
+          });
+        }
+
+        function renderTableCards() {
+          var layer = document.getElementById("cardsLayer");
+          var wrap = layer.closest(".table-wrap");
+          var g = feltGeometry(wrap);
+          var n = state.participants.length;
+          var live = {};
+
+          state.participants.forEach(function (p, i) {
+            if (!p.voted) return;
+            live[p.id] = true;
+            var el = layer.querySelector('.oncard[data-id="' + p.id + '"]');
+            var isNew = !el;
+            if (isNew) {
+              el = document.createElement("div");
+              el.className = "oncard";
+              el.setAttribute("data-id", p.id);
+            }
+            var face = state.phase === "revealed" ? "front:" + p.value : "back";
+            if (el.getAttribute("data-face") !== face) {
+              var flipping =
+                pendingFlip && face.indexOf("front:") === 0 && el.getAttribute("data-face") === "back";
+              el.setAttribute("data-face", face);
+              if (flipping) {
+                el.classList.remove("flip");
+                void el.offsetWidth;
+                el.classList.add("flip");
+                (function (card, value) {
+                  flipTimers.push(
+                    setTimeout(function () {
+                      if (state.phase !== "revealed") return;
+                      card.innerHTML = cardFrontHTML(value);
+                    }, 170),
+                  );
+                })(el, p.value);
+              } else {
+                el.innerHTML =
+                  state.phase === "revealed"
+                    ? cardFrontHTML(p.value)
+                    : cardBackHTML();
+              }
+            }
+            placeCard(el, i, n, g);
+            if (isNew) {
+              layer.appendChild(el);
+              void el.offsetWidth; // flush layout so the fade-in has a starting frame
+              el.classList.add("show");
+            }
+          });
+
+          dropStale(layer, live);
+          pendingFlip = false;
+        }
+
+        /**
+         * Seat geometry — equal ARC LENGTH around a stadium (pill) outline.
+         *
+         * The rail is two straight edges joined by two semicircular caps. Seats are
+         * spread by equal perimeter distance (step = perimeter / N), not by equal
+         * angle: equal angles would crowd the caps and thin out the long rails, and
+         * filling outward from one point crowds whichever edge is filled first. The
+         * whole ring is then rotated so the HOST always sits at top-center (the dealer
+         * seat) and everyone else follows clockwise in join order. Any N from 1..12
+         * stays evenly spaced, and seats just redistribute when someone joins/leaves.
+         */
+        function geometry(W, H) {
+          var w = W || 780,
+            h = H || 332;
+          var R = h / 2;
+          var sh = Math.max(0, (w - h) / 2); // half-length of one straight edge
+          return {
+            W: w,
+            H: h,
+            cx: w / 2,
+            cy: h / 2,
+            R: R,
+            sh: sh,
+            P: 4 * sh + 2 * Math.PI * R,
+          };
+        }
+
+        function feltGeometry(wrap) {
+          // felt = table minus the 16px rail padding on each side
+          return geometry(
+            (wrap.offsetWidth || 780) - 32,
+            (wrap.offsetHeight || 332) - 32,
+          );
+        }
+
+        // d = 0 at top-center and grows clockwise; also returns the outward unit
+        // normal at that point, which is what seats/cards are offset along.
+        function perimeterPoint(d, g) {
+          var arc = Math.PI * g.R;
+          d = ((d % g.P) + g.P) % g.P;
+
+          if (d <= g.sh) {
+            // top edge, center -> right corner
+            return { x: g.cx + d, y: g.cy - g.R, nx: 0, ny: -1 };
+          }
+          d -= g.sh;
+          if (d <= arc) {
+            // right cap, top -> bottom
+            var t = d / g.R;
+            return {
+              x: g.cx + g.sh + g.R * Math.sin(t),
+              y: g.cy - g.R * Math.cos(t),
+              nx: Math.sin(t),
+              ny: -Math.cos(t),
+            };
+          }
+          d -= arc;
+          if (d <= 2 * g.sh) {
+            // bottom edge, right corner -> left corner
+            return { x: g.cx + g.sh - d, y: g.cy + g.R, nx: 0, ny: 1 };
+          }
+          d -= 2 * g.sh;
+          if (d <= arc) {
+            // left cap, bottom -> top
+            var t2 = d / g.R;
+            return {
+              x: g.cx - g.sh - g.R * Math.sin(t2),
+              y: g.cy + g.R * Math.cos(t2),
+              nx: -Math.sin(t2),
+              ny: Math.cos(t2),
+            };
+          }
+          d -= arc;
+          return { x: g.cx - g.sh + d, y: g.cy - g.R, nx: 0, ny: -1 }; // top edge, left corner -> center
+        }
+
+        // the host owns top-center (d = 0); if there is no host, seat 0 takes it
+        function anchorIndex() {
+          var i = state.participants.findIndex(function (p) {
+            return p.host;
+          });
+          return i < 0 ? 0 : i;
+        }
+
+        function seatPoint(index, total, g) {
+          var step = g.P / total;
+          var offset = (((index - anchorIndex()) % total) + total) % total;
+          return perimeterPoint(offset * step, g);
+        }
+
+        function placeSeat(el, index, total, g) {
+          var q = seatPoint(index, total, g);
+          // side seats need more clearance since the chip is wider than it is tall
+          var out = 46 + 14 * Math.abs(q.nx);
+          el.style.left = ((q.x + q.nx * out) / g.W) * 100 + "%";
+          el.style.top = ((q.y + q.ny * out) / g.H) * 100 + "%";
+        }
+
+        function placeCard(el, index, total, g) {
+          var q = seatPoint(index, total, g);
+          // rotated cards on the caps take more horizontal room, so sit them closer in
+          var inward = 48 - 8 * Math.abs(q.nx);
+          el.style.left = ((q.x - q.nx * inward) / g.W) * 100 + "%";
+          el.style.top = ((q.y - q.ny * inward) / g.H) * 100 + "%";
+          el.style.setProperty(
+            "--rot",
+            cardRotation(q.nx, q.ny).toFixed(1) + "deg",
+          );
+        }
+
+        // cards fan with the rail but stay readable: upright on the straight edges,
+        // +-90deg on the caps, never upside down
+        function cardRotation(nx, ny) {
+          var a = (Math.atan2(nx, -ny) * 180) / Math.PI;
+          while (a > 90) a -= 180;
+          while (a < -90) a += 180;
+          return a;
+        }
+
+        function positionSeats() {
+          var layer = document.getElementById("seatsLayer");
+          var g = geometry(
+            layer.parentElement.offsetWidth,
+            layer.parentElement.offsetHeight,
+          );
+          var n = state.participants.length;
+          state.participants.forEach(function (p, i) {
+            var el = layer.querySelector('.seat[data-id="' + p.id + '"]');
+            if (el) placeSeat(el, i, n, g);
+          });
+        }
+
+        function positionCards() {
+          var layer = document.getElementById("cardsLayer");
+          var g = feltGeometry(layer.closest(".table-wrap"));
+          var n = state.participants.length;
+          state.participants.forEach(function (p, i) {
+            var el = layer.querySelector('.oncard[data-id="' + p.id + '"]');
+            if (el) placeCard(el, i, n, g);
+          });
+        }
+
+        function renderCenter() {
+          var c = document.getElementById("center");
+          var x = votedCount(),
+            n = totalCount();
+          if (state.phase === "voting") {
+            c.innerHTML =
+              '<p class="progress"><b>' +
+              x +
+              "</b> of <b>" +
+              n +
+              "</b> voted</p>" +
+              '<button id="revealBtn" class="chip-btn" type="button" ' +
+              (x === 0 ? "disabled" : "") +
+              ' title="' +
+              (x === 0 ? "No votes yet" : "Flip all cards") +
+              '"><span>Reveal</span></button>';
+            document
+              .getElementById("revealBtn")
+              .addEventListener("click", reveal);
+          } else {
+            c.innerHTML =
+              '<button id="reVoteBtn" class="chip-btn" type="button"><span>Re-vote</span></button>';
+            document
+              .getElementById("reVoteBtn")
+              .addEventListener("click", reVote);
+          }
+        }
+
+        function renderBelowTable() {
+          var slot = document.getElementById("belowTable");
+          var badge = document.getElementById("phaseBadge");
+          var hintText =
+            state.myVote === null
+              ? "Pick a card to vote — your card lands face-down on the table."
+              : hideSelected
+                ? "Vote submitted. Click another card to change it."
+                : "You voted <b>" +
+                  (state.myVote === PASS ? "☕ Pass" : state.myVote) +
+                  "</b>. Click another card to change it.";
+          if (state.phase === "voting") {
+            badge.className = "badge voting";
+            badge.innerHTML = '<span class="dot"></span>Voting';
+          } else {
+            badge.className = "badge revealed";
+            badge.innerHTML = '<span class="dot"></span>Revealed';
+            hintText =
+              "Cards are revealed. Re-vote on the table to start a new round.";
+          }
+          slot.innerHTML =
+            '<div class="deck' +
+            (hideSelected ? " is-concealed" : "") +
+            '" id="deck">' +
+            '<div class="deck-head">' +
+            '<p class="deck-label">Your hand</p>' +
+            '<label class="hide-pick"><input id="hideSelected" type="checkbox"' +
+            (hideSelected ? " checked" : "") +
+            " /> Hide selected card</label>" +
+            "</div>" +
+            '<div class="hand" id="hand"></div>' +
+            '<p class="deck-hint" id="deckHint">' +
+            hintText +
+            "</p>" +
+            "</div>";
+          document
+            .getElementById("hideSelected")
+            .addEventListener("change", function (ev) {
+              hideSelected = ev.target.checked;
+              renderBelowTable();
+            });
+          renderHandCards();
+          syncResultsDrawer();
+        }
+
+        function syncResultsDrawer() {
+          var drawer = document.getElementById("resultsDrawer");
+          var body = document.getElementById("resultsBody");
+          if (state.phase !== "revealed") {
+            drawer.classList.remove("is-open");
+            drawer.setAttribute("aria-hidden", "true");
+            return;
+          }
+          body.innerHTML = renderResultsHTML();
+          drawer.setAttribute("aria-hidden", "false");
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              drawer.classList.add("is-open");
+            });
+          });
+        }
+
+        function renderResultsHTML() {
+          var r = result();
+          var title = r.hasConsensus
+            ? '<p class="results-title ok">Consensus</p>' +
+              '<p class="results-sub">Estimated at ' +
+              r.consensusValue +
+              "</p>"
+            : '<p class="results-title no">No consensus yet</p>' +
+              '<p class="results-sub">Discuss the spread, then re-vote.</p>';
+
+          var entries = Object.keys(r.dist)
+            .map(function (v) {
+              return { value: Number(v), count: r.dist[v] };
+            })
+            .sort(function (a, b) {
+              return b.count - a.count || a.value - b.value;
+            });
+          if (r.passCount > 0) {
+            entries.push({ value: PASS, count: r.passCount });
+          }
+          var max = 1;
+          entries.forEach(function (e) {
+            if (e.count > max) max = e.count;
+          });
+
+          var cols = entries
+            .map(function (e) {
+              var h = 12 + Math.round((e.count / max) * 52);
+              var label = e.count === 1 ? "1 vote" : e.count + " votes";
+              return (
+                '<div class="spread-col">' +
+                '<div class="spread-bar" style="--h:' +
+                h +
+                'px"></div>' +
+                '<div class="spread-card">' +
+                cardFrontHTML(e.value) +
+                "</div>" +
+                '<p class="spread-count">' +
+                label +
+                "</p>" +
+                "</div>"
+              );
+            })
+            .join("");
+
+          var agreePct = 0;
+          if (r.numericCount > 0) {
+            var top = 0;
+            Object.keys(r.dist).forEach(function (v) {
+              if (r.dist[v] > top) top = r.dist[v];
+            });
+            agreePct = Math.round((top / r.numericCount) * 100);
+          }
+
+          return (
+            title +
+            '<div class="results-row">' +
+            '<div class="spread">' +
+            (cols || '<p class="spread-count">No votes</p>') +
+            "</div>" +
+            (r.numericCount > 0
+              ? '<div class="agree">' +
+                '<p class="agree-label">Agreement</p>' +
+                '<div class="agree-ring" style="--pct:' +
+                agreePct +
+                '"><span>' +
+                agreePct +
+                "%</span></div>" +
+                "</div>"
+              : "") +
+            "</div>"
+          );
+        }
+
+        function renderHandCards() {
+          var hand = document.getElementById("hand");
+          if (!hand) return;
+          var html = "";
+          DECK.forEach(function (v) {
+            var sel =
+              !hideSelected && state.phase === "voting" && state.myVote === v
+                ? " selected"
+                : "";
+            html +=
+              '<button type="button" class="hand-card' +
+              sel +
+              '" data-value="' +
+              v +
+              '" aria-pressed="' +
+              (sel ? "true" : "false") +
+              '">' +
+              cardFrontHTML(v) +
+              "</button>";
+          });
+          var selPass =
+            !hideSelected && state.phase === "voting" && state.myVote === PASS
+              ? " selected"
+              : "";
+          html +=
+            '<button type="button" class="hand-card' +
+            selPass +
+            '" data-value="' +
+            PASS +
+            '" aria-pressed="' +
+            (selPass ? "true" : "false") +
+            '">' +
+            cardFrontHTML(PASS) +
+            "</button>";
+          hand.innerHTML = html;
+          fanHand(hand);
+
+          hand.querySelectorAll(".hand-card").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+              var v = btn.getAttribute("data-value");
+              vote(v === PASS ? PASS : Number(v));
+            });
+          });
+        }
+
+        /**
+         * Fan the hand on an arc like a held poker hand: cards tilt outward from the
+         * middle and the outer ones drop lower, so the top edges trace a curve.
+         */
+        function fanHand(hand) {
+          var cards = hand.querySelectorAll(".hand-card");
+          var mid = (cards.length - 1) / 2;
+          var SPREAD = 5.5; // degrees of tilt per card away from the middle
+          var DROP = 1.4; // px of extra sink per squared step (the pivot supplies the rest of the arc)
+          cards.forEach(function (el, i) {
+            var k = i - mid;
+            el.style.setProperty("--fan", (k * SPREAD).toFixed(2) + "deg");
+            el.style.setProperty("--lift", (k * k * DROP).toFixed(1) + "px");
+          });
+        }
+
+        function renderAll() {
+          renderSeats();
+          renderTableCards();
+          renderCenter();
+          renderBelowTable();
+          renderPlayerCount();
+        }
+
+        function result() {
+          var votes = state.participants
+            .filter(function (p) {
+              return p.voted;
+            })
+            .map(function (p) {
+              return p.value;
+            });
+          var numeric = votes.filter(function (v) {
+            return v !== PASS;
+          });
+          var passCount = votes.length - numeric.length;
+          var hasConsensus =
+            numeric.length > 0 &&
+            passCount === 0 &&
+            new Set(numeric).size === 1;
+          var dist = {};
+          numeric.forEach(function (v) {
+            dist[v] = (dist[v] || 0) + 1;
+          });
+          return {
+            hasConsensus: hasConsensus,
+            consensusValue: hasConsensus ? numeric[0] : null,
+            dist: dist,
+            passCount: passCount,
+            numericCount: numeric.length,
+          };
+        }
+
+        function playSfx(id) {
+          var el = document.getElementById(id);
+          if (!el) return;
+          el.muted = false;
+          el.volume = 1;
+          try {
+            el.currentTime = 0;
+          } catch (e) {}
+          var play = el.play();
+          if (play && play.catch) play.catch(function () {});
+        }
+
+        function playTableCue(cue) {
+          if (cue === "revote") playSfx("shuffleSfx");
+          else playSfx("revealSfx");
+        }
+
+        var timers = [];
+
+        function vote(v) {
+          if (state.phase !== "voting") return;
+          state.myVote = v;
+          var me = selfP();
+          if (!me) return; // no self participant (removed) — nothing to vote for
+          me.voted = true;
+          me.value = v;
+          renderAll();
+          startOthers();
+        }
+
+        function startOthers() {
+          state.participants
+            .filter(function (p) {
+              return !p.self && !p.voted;
+            })
+            .forEach(function (p) {
+              var delay = 700 + Math.random() * 2200;
+              timers.push(
+                setTimeout(function () {
+                  if (state.phase !== "voting") return;
+                  p.voted = true;
+                  p.value = randomValue();
+                  renderAll();
+                }, delay),
+              );
+            });
+        }
+
+        function randomValue() {
+          var r = Math.random();
+          if (r < 0.06) return PASS;
+          if (r < 0.2) return 21;
+          if (r < 0.4) return 8;
+          if (r < 0.6) return 5;
+          if (r < 0.75) return 3;
+          if (r < 0.9) return 2;
+          return 1;
+        }
+
+        function reveal() {
+          if (state.phase !== "voting" || votedCount() === 0) return;
+          state.phase = "revealed";
+          pendingFlip = true;
+          renderAll();
+          playTableCue(result().hasConsensus ? "consensus" : "split");
+        }
+
+        function reVote() {
+          timers.forEach(clearTimeout);
+          timers = [];
+          flipTimers.forEach(clearTimeout);
+          flipTimers = [];
+          pendingFlip = false;
+          playTableCue("revote");
+          state.phase = "voting";
+          state.myVote = null;
+          state.participants.forEach(function (p) {
+            p.voted = false;
+            p.value = null;
+          });
+          renderAll();
+        }
+
+        /* ---------- player count tester (add/remove participants) ---------- */
+        var EXTRA_NAMES = [
+          "Agus",
+          "Rina",
+          "Eko",
+          "Putri",
+          "Joko",
+          "Dewi",
+          "Andi",
+          "Siti",
+          "Bayu",
+          "Nia",
+          "Fajar",
+          "Lina",
+        ];
+        var extraIdx = 0;
+
+        function renderPlayerCount() {
+          var el = document.getElementById("playerCount");
+          if (el) el.textContent = totalCount();
+          // min 1 (host), max 12 — the tester may remove anyone except the host
+          document.getElementById("removePlayer").disabled = totalCount() <= 1;
+          document.getElementById("addPlayer").disabled =
+            state.participants.length >= 12;
+        }
+
+        function addPlayer() {
+          if (state.participants.length >= 12) return;
+          var name = EXTRA_NAMES[extraIdx % EXTRA_NAMES.length];
+          extraIdx++;
+          var p = {
+            id: "p" + Date.now() + Math.floor(Math.random() * 999),
+            name: name,
+            host: false,
+            self: false,
+            voted: false,
+            value: null,
+          };
+          state.participants.push(p);
+          renderAll();
+        }
+
+        function removePlayer() {
+          if (totalCount() <= 1) return; // keep at least the host
+          // remove the last-joined (highest order) first; never the host
+          for (var i = state.participants.length - 1; i >= 0; i--) {
+            var p = state.participants[i];
+            if (p.host) continue;
+            // clear their pending vote timer
+            timers.forEach(clearTimeout);
+            timers = [];
+            state.participants.splice(i, 1);
+            renderAll();
+            return;
+          }
+        }
+
+        document
+          .getElementById("addPlayer")
+          .addEventListener("click", addPlayer);
+        document
+          .getElementById("removePlayer")
+          .addEventListener("click", removePlayer);
+
+        function copyLink() {
+          var url = document.querySelector(".invite-url").textContent;
+          var btn = document.getElementById("copyBtn");
+          function done() {
+            btn.textContent = "Copied!";
+            setTimeout(function () {
+              btn.textContent = "Copy link";
+            }, 1600);
+          }
+          function fail() {
+            btn.textContent = "Copy failed";
+            setTimeout(function () {
+              btn.textContent = "Copy link";
+            }, 1600);
+          }
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(done, fail);
+          } else {
+            var ta = document.createElement("textarea");
+            ta.value = url;
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+              document.execCommand("copy");
+              done();
+            } catch (e) {
+              fail();
+            }
+            document.body.removeChild(ta);
+          }
+        }
+
+        document.getElementById("copyBtn").addEventListener("click", copyLink);
+
+        // seat offsets are in px, so the ring has to be re-solved when the table resizes
+        var resizeTimer = null;
+        window.addEventListener("resize", function () {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(function () {
+            positionSeats();
+            positionCards();
+          }, 80);
+        });
+
+        window.__poker = state; // exposed for automated checks
+        renderAll();
+        renderPlayerCount();
+      })();
+    </script>
+  </body>
+</html>

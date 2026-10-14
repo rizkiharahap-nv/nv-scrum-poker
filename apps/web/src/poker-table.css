@@ -1,0 +1,939 @@
+/* Reset — Tailwind preflight is gone. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+button,
+input {
+  font: inherit;
+}
+
+/* Holdem table — port of docs/design/prototype/poker-table.html.
+   Scoped under .holdem so landing/join/room share the casino chrome. */
+
+.holdem {
+  --ink: #f3efe6;
+  --muted: #b8a99a;
+  --faint: #8a7b6d;
+  --red: #dc2626;
+  --red-dark: #991b1b;
+  --felt: #177245;
+  --felt-dark: #0f5132;
+  --felt-light: #1e8a52;
+  --gold: #f59e0b;
+  --card-fs: 24px;
+  min-height: 100vh;
+  color: var(--ink);
+  background:
+    radial-gradient(
+      ellipse 72% 58% at 50% 46%,
+      rgba(255, 214, 140, 0.34) 0%,
+      rgba(255, 176, 80, 0.12) 26%,
+      transparent 58%
+    ),
+    radial-gradient(
+      ellipse 90% 70% at 50% 48%,
+      #24180f 0%,
+      #0c0907 58%,
+      #050403 100%
+    );
+}
+
+.holdem .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  background: #140f0c;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.22);
+}
+.holdem .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.holdem .logo {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--red);
+}
+.holdem .brand-name {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+.holdem .brand-accent {
+  color: var(--red);
+  font-style: italic;
+}
+.holdem .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.holdem .badge.voting {
+  background: #14532d;
+  color: #86efac;
+}
+.holdem .badge.revealed {
+  background: #2a2118;
+  color: #e7d3a3;
+}
+.holdem .badge .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.holdem .invite {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.holdem .invite-url {
+  font-size: 12px;
+  color: var(--muted);
+  background: #1c1410;
+  border: 1px solid #3a2a1e;
+  border-radius: 999px;
+  padding: 6px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+.holdem .btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 10px;
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+.holdem .btn-ghost:hover {
+  background: #2a2118;
+  color: var(--ink);
+}
+.holdem .btn-ghost:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.holdem .stage {
+  position: relative;
+  max-width: 1080px;
+  min-width: 780px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+}
+
+.holdem .table-wrap {
+  position: relative;
+  width: min(100% - 250px, 780px);
+  margin: 104px auto 122px;
+}
+
+.holdem .table {
+  position: relative;
+  z-index: 1;
+  border-radius: 999px;
+  aspect-ratio: 2.35 / 1;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(0, 0, 0, 0.07) 0 2px,
+      transparent 2px 7px
+    ),
+    linear-gradient(170deg, #b9844f 0%, #96602f 45%, #75471f 100%);
+  padding: 16px;
+  box-shadow:
+    0 0 90px 18px rgba(255, 200, 110, 0.16),
+    0 24px 60px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    inset 0 3px 8px rgba(0, 0, 0, 0.35);
+}
+
+.holdem .felt {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  border-radius: 999px;
+  background: radial-gradient(
+    ellipse at 50% 46%,
+    #2aa05e 0%,
+    var(--felt-light) 28%,
+    var(--felt) 62%,
+    var(--felt-dark) 100%
+  );
+  box-shadow: inset 0 6px 18px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+}
+.holdem .felt::before {
+  content: "";
+  position: absolute;
+  inset: 9%;
+  border: 2px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  pointer-events: none;
+}
+.holdem .felt::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  aspect-ratio: 2.35/1;
+  transform: translate(-50%, -50%);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.holdem .seats-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.holdem .seat {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 104px;
+  transform: translate(-50%, -50%);
+  transition:
+    left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    top 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: holdem-join 0.35s ease;
+  pointer-events: auto;
+}
+
+.holdem .avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  color: hsl(var(--hue, 240) 55% 30%);
+  background: linear-gradient(
+    160deg,
+    hsl(var(--hue, 240) 90% 94%),
+    hsl(var(--hue, 240) 66% 79%)
+  );
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 4.5px rgba(15, 23, 42, 0.12),
+    0 6px 14px rgba(15, 23, 42, 0.22);
+  position: relative;
+}
+.holdem .seat.is-self .avatar {
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 5px #6366f1,
+    0 6px 16px rgba(67, 56, 202, 0.3);
+}
+.holdem .seat.is-host .avatar {
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 5px var(--gold),
+    0 6px 16px rgba(180, 83, 9, 0.3);
+}
+
+.holdem .plate {
+  position: relative;
+  z-index: 2;
+  margin-top: -12px;
+  min-width: 76px;
+  max-width: 104px;
+  padding: 5px 12px 6px;
+  border-radius: 10px;
+  text-align: center;
+  background: linear-gradient(180deg, #2b374d, #131c2c);
+  box-shadow:
+    0 4px 10px rgba(15, 23, 42, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.holdem .seat.voted .plate {
+  box-shadow:
+    0 4px 10px rgba(15, 23, 42, 0.35),
+    inset 0 0 0 1.5px rgba(34, 197, 94, 0.8);
+}
+.holdem .plate .name {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #fff;
+  max-width: 82px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.holdem .tag {
+  position: absolute;
+  z-index: 3;
+  font-size: 8.5px;
+  font-weight: 900;
+  line-height: 1.5;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #fff;
+  padding: 1px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow:
+    0 0 0 1.5px rgba(19, 28, 44, 0.9),
+    0 2px 5px rgba(15, 23, 42, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.holdem .tag.host {
+  left: -2px;
+  top: 33px;
+  background: linear-gradient(180deg, #fbbf24, #d97706);
+}
+.holdem .tag.you {
+  right: -2px;
+  top: 33px;
+  background: linear-gradient(180deg, #818cf8, #4338ca);
+}
+.holdem .tag.novote {
+  position: relative;
+  left: auto;
+  top: auto;
+  transform: none;
+  z-index: 2;
+  margin-top: 4px;
+  background: #475569;
+}
+
+.holdem .cards-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+.holdem .oncard {
+  position: absolute;
+  z-index: 3;
+  width: 48px;
+  height: 68px;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(var(--rot, 0deg));
+  animation: holdem-attach 0.35s ease forwards;
+  transition:
+    left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.holdem .oncard-face {
+  width: 100%;
+  height: 100%;
+}
+.holdem .oncard-face.flip {
+  animation: holdem-card-flip 0.36s ease;
+}
+@keyframes holdem-card-flip {
+  0% {
+    transform: scaleX(1);
+  }
+  48% {
+    transform: scaleX(0.08);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .holdem .oncard-face.flip {
+    animation: none;
+  }
+}
+.holdem .oncard .card-front .value,
+.holdem .oncard .card-front .corner {
+  font-size: 17px;
+}
+.holdem .oncard .card-front.pass .value {
+  font-size: 26px;
+}
+
+.holdem .card-back {
+  width: 100%;
+  height: 100%;
+  border-radius: 9px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.1) 0 2.5px,
+      transparent 2.5px 6px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.1) 0 2.5px,
+      transparent 2.5px 6px
+    ),
+    linear-gradient(155deg, #ef4444, var(--red) 40%, var(--red-dark));
+  border: 2px solid #fff;
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+  position: relative;
+}
+.holdem .card-back::before {
+  content: "♦";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 20px;
+}
+.holdem .card-back::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border-radius: 5px;
+}
+
+.holdem .card-front {
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 9px;
+  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.holdem .card-front .value {
+  font-size: var(--card-fs);
+  font-weight: 800;
+  line-height: 1;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+.holdem .card-front .corner {
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  font-size: var(--card-fs);
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+.holdem .card-front .corner.br {
+  top: auto;
+  left: auto;
+  right: 5px;
+  bottom: 3px;
+  transform: rotate(180deg);
+}
+.holdem .card-front.pass .value {
+  font-size: 28px;
+  line-height: 1;
+}
+.holdem .card-front.pass .corner {
+  display: none;
+}
+.holdem .red {
+  color: #b91c1c;
+}
+.holdem .black {
+  color: #111827;
+}
+
+.holdem .center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 46%;
+  text-align: center;
+}
+.holdem .progress {
+  position: static;
+  transform: none;
+  margin: 0;
+  width: max-content;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+.holdem .progress b {
+  color: #fff;
+  font-size: 16px;
+}
+
+/* Dealer plaque — stadium table, not a round chip. */
+.holdem .chip-btn {
+  width: auto;
+  height: auto;
+  min-width: 128px;
+  padding: 9px 26px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #fff6d8 0%, #f0d48a 46%, #d4a017 100%);
+  border: 1.5px solid #8a6914;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(120, 80, 10, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.15s,
+    filter 0.15s;
+}
+.holdem .chip-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.06);
+  box-shadow:
+    0 7px 16px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(120, 80, 10, 0.25);
+}
+.holdem .chip-btn:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.85);
+  opacity: 0.55;
+}
+.holdem .chip-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+.holdem .chip-btn span {
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #5c1a12;
+}
+
+.holdem .results {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  width: 100%;
+  text-align: center;
+  background: #1a140f;
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  border-bottom: 0;
+  border-radius: 20px 20px 0 0;
+  padding: 8px 24px 28px;
+  box-shadow: 0 -18px 48px rgba(0, 0, 0, 0.55);
+  transform: translateY(110%);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.holdem .results.is-open {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.holdem .results-handle {
+  width: 42px;
+  height: 4px;
+  border-radius: 999px;
+  background: #5c4a3a;
+  margin: 4px auto 12px;
+}
+.holdem .results-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.holdem .results-title.ok {
+  color: #4ade80;
+}
+.holdem .results-title.no {
+  color: #f87171;
+}
+.holdem .results-sub {
+  margin: 6px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+}
+.holdem .results-fine {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+.holdem .results-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 36px;
+  padding-top: 12px;
+}
+.holdem .spread {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 28px;
+}
+.holdem .spread-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.holdem .spread-bar {
+  width: 8px;
+  height: var(--h, 16px);
+  border-radius: 4px;
+  background: linear-gradient(180deg, #fbbf24, #b45309);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.holdem .spread-card {
+  width: 56px;
+  height: 80px;
+}
+.holdem .spread-card .card-front .value {
+  font-size: 22px;
+}
+.holdem .spread-card .card-front .corner {
+  font-size: 16px;
+}
+.holdem .spread-card .card-front.pass .value {
+  font-size: 22px;
+}
+.holdem .spread-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.holdem .agree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+  padding-bottom: 22px;
+}
+.holdem .agree-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.holdem .agree-ring {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  --agree: hsl(calc(var(--pct, 0) * 1.2) 72% 55%);
+  background: conic-gradient(var(--agree) calc(var(--pct, 0) * 1%), #2a2118 0);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.holdem .agree-ring span {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #140f0c;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--agree);
+}
+
+.holdem .deck {
+  text-align: center;
+}
+.holdem .deck-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.holdem .deck-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin: 0;
+}
+.holdem .hide-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.holdem .hide-pick input {
+  accent-color: var(--gold);
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+.holdem .hand {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 180px;
+  padding-top: 40px;
+}
+.holdem .hand-card {
+  width: 80px;
+  height: 116px;
+  margin-left: -34px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 11px;
+  cursor: pointer;
+  position: relative;
+  transform-origin: 50% 210%;
+  transform: rotate(var(--fan, 0deg));
+}
+.holdem .hand-card:first-child {
+  margin-left: 0;
+}
+.holdem .hand-card > * {
+  width: 100%;
+  height: 100%;
+  transform: translateY(var(--lift, 0px));
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+  pointer-events: none;
+}
+.holdem .hand-card:hover {
+  z-index: 10;
+}
+.holdem .hand-card:hover > * {
+  transform: translateY(calc(var(--lift, 0px) - 18px)) scale(1.05);
+}
+.holdem .hand-card.selected {
+  z-index: 20;
+}
+.holdem .hand-card.selected > * {
+  transform: translateY(calc(var(--lift, 0px) - 30px)) scale(1.07);
+  box-shadow:
+    0 0 0 3px var(--gold),
+    0 14px 28px rgba(15, 23, 42, 0.3);
+}
+.holdem .deck.is-concealed .hand-card > * {
+  transition: none;
+}
+.holdem .deck.is-concealed .hand-card:hover,
+.holdem .deck.is-concealed .hand-card.selected {
+  z-index: auto;
+}
+.holdem .deck.is-concealed .hand-card:hover > *,
+.holdem .deck.is-concealed .hand-card.selected > * {
+  transform: translateY(var(--lift, 0px));
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
+}
+.holdem .hand-card:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+.holdem .hand-card .card-front {
+  border-radius: 11px;
+}
+.holdem .hand-card .card-front .value {
+  font-size: 30px;
+}
+.holdem .hand-card .card-front .corner {
+  font-size: 26px;
+}
+.holdem .hand-card .card-front.pass .value {
+  font-size: 40px;
+}
+.holdem .deck-hint {
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--muted);
+  min-height: 18px;
+}
+.holdem .deck-hint b {
+  color: var(--ink);
+}
+
+.holdem .banner {
+  margin: 0 auto 16px;
+  max-width: 640px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 10px;
+  border: 1px solid #f59e0b;
+  background: #3b2a12;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fde68a;
+}
+
+.holdem .gate {
+  max-width: 28rem;
+  margin: 0 auto;
+  padding: 80px 16px 60px;
+  text-align: center;
+}
+.holdem .gate h1 {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.holdem .gate p.lead {
+  margin-top: 8px;
+  color: var(--muted);
+}
+.holdem .gate label {
+  display: block;
+  text-align: left;
+  margin-top: 24px;
+}
+.holdem .gate label span {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #e7d3a3;
+}
+.holdem .gate input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #3a2a1e;
+  background: #1c1410;
+  padding: 10px 12px;
+  font-size: 16px;
+  color: var(--ink);
+}
+.holdem .gate input:focus {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.holdem .gate .error {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #f87171;
+}
+.holdem .gate .primary {
+  margin-top: 16px;
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  background: #dc2626;
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.holdem .gate .primary:hover:not(:disabled) {
+  background: #b91c1c;
+}
+.holdem .gate .primary:disabled {
+  cursor: not-allowed;
+  background: #4b5563;
+  color: #9ca3af;
+}
+.holdem .gate .primary:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+.holdem .gate .fine {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--faint);
+}
+.holdem .gate .btn-ghost {
+  margin-top: 8px;
+  width: 100%;
+  justify-content: center;
+}
+.holdem .spinner {
+  display: block;
+  margin: 0 auto;
+  width: 32px;
+  height: 32px;
+  color: #e7d3a3;
+  animation: holdem-spin 0.8s linear infinite;
+}
+@keyframes holdem-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes holdem-join {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes holdem-attach {
+  to {
+    opacity: 1;
+  }
+}

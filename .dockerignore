@@ -1,0 +1,9 @@
+node_modules
+.git
+.wrangler
+.tmp-shots
+*.log
+.env
+.env.local
+.DS_Store
+apps/web/dist

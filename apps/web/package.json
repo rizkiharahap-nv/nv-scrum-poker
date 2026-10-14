@@ -1,0 +1,22 @@
+{
+  "name": "@scrum-poker/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@scrum-poker/protocol": "0.1.0",
+    "@scrum-poker/room": "0.1.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@types/node": "^22.20.1",
+    "svelte": "^5.56.9",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1"
+  }
+}
