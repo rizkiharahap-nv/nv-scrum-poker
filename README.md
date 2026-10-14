@@ -20,43 +20,45 @@ No accounts. Display name only. Rooms are ephemeral live sessions.
 | --- | --- |
 | Frontend | Svelte 5 + Vite + TypeScript (plain CSS) |
 | Realtime | Native WebSocket (JSON envelopes + acks) |
-| Production | One Node 22 container: SPA + `/ws`, in-memory rooms |
+| Production | [Substrait platform](https://app.substrait.build) — backend-only Node image (SPA + `/ws`) |
 | Shared logic | `packages/room`, `packages/protocol` |
 
-## Deploy on Substrait (GKE)
+## Deploy on Substrait
 
-Build a container from this repo and run it on Substrait behind Kong.
+This repo is initialized for the **Substrait upload contract** (`substrait.yaml`, `cicd/Dockerfile.backend`, `AGENTS.md`). There is **no** separate `frontend/` service: one backend serves the built SPA, `GET /health`, `GET /api/health`, and WebSocket `/ws` on port **8000**.
 
-### Container
+### Cursor plugin workflow
+
+1. `/substrait:login` — authenticate (set portal URL if prompted).
+2. Create an app in the Substrait portal (or use an existing one).
+3. `/substrait:link` — link this folder to that app.
+4. `/substrait:deploy` — upload source and deploy (`--watch` to follow the build).
+
+Config is stored in `.substrait/config.json` (gitignored). See [`AGENTS.md`](AGENTS.md) for contract essentials.
+
+### Local container smoke test
 
 ```bash
-docker build -t nv-scrum-poker .
-docker run --rm -p 8080:8080 nv-scrum-poker
+docker build -f cicd/Dockerfile.backend -t nv-scrum-poker .
+docker run --rm -p 8000:8000 nv-scrum-poker
 ```
 
-Open http://localhost:8080 — same origin serves the SPA and `ws://…/ws`.
+Open http://localhost:8000 — same origin serves the SPA and `ws://…/ws`.
 
 | Env | Default | Purpose |
 | --- | --- | --- |
-| `PORT` | `8080` | HTTP + WebSocket listen port |
-| `STATIC_DIR` | `apps/web/dist` (relative to server) | Built SPA assets; set to `/app/apps/web/dist` in the image |
+| `PORT` | `8000` | HTTP + WebSocket (Substrait readiness probe) |
+| `STATIC_DIR` | `apps/web/dist` locally; `/app/apps/web/dist` in image | Built SPA |
 
-- **Health probe:** `GET /healthz` → `200 ok`
-- **WebSocket:** server sends periodic pings (~30s) so ingress idle timeouts do not drop quiet tables
-- **Graceful shutdown:** `SIGTERM` closes connections before exit
+- **Health:** `GET /health` or `GET /healthz` → `200 ok`; `GET /api/health` → `{"ok":true}`
+- **WebSocket:** server pings ~every 30s on idle connections
+- **Graceful shutdown:** `SIGTERM` closes sockets before exit
 
-Local dev loads [`.env`](.env) from the repo root automatically (`PORT`, `STATIC_DIR`). Copy [`.env.example`](.env.example) to get started.
+Local dev loads [`.env`](.env) from the repo root. Copy [`.env.example`](.env.example) to get started.
 
-### Platform checklist (outside this repo)
+### Single-instance semantics
 
-1. Service Desk / Orchestrator: new **Web** service on Substrait, **no database**, **no AAA** — [New Service Spin Up](https://ninjavan-tech.atlassian.net/wiki/spaces/EP/pages/544342033)
-2. Bamboo: build this `Dockerfile`, deploy to **substrait** only
-3. Helm: container port **8080**, liveness/readiness **`/healthz`**, Kong route with **WebSocket upgrade** and a long proxy read timeout
-4. Internal hostname on Substrait ingress (no app-level auth)
-
-### Hard requirement: one replica
-
-Room state lives in process memory (`Map`). **Replicas must be 1.** Multiple pods split rooms (create on pod A, join on pod B → `ROOM_NOT_FOUND`). A pod restart or deploy clears all live rooms (product semantics: ephemeral sessions).
+Room state is in-process memory. The platform should run **one backend replica** for correct realtime behaviour; scaling out splits rooms across pods. Restarts clear live rooms (by design).
 
 ## Quick start (development)
 
@@ -71,10 +73,10 @@ cp .env.example .env   # optional; edit PORT
 
 ```bash
 # terminal 1
-npm run dev -w apps/server    # PORT from .env (default 8080)
+npm run dev -w apps/server
 
 # terminal 2
-npm run dev -w apps/web       # :5173 → proxies /ws to server port in vite.config
+npm run dev -w apps/web       # :5173 → proxies /ws (PORT from .env)
 ```
 
 Open http://localhost:5173
@@ -86,7 +88,7 @@ npm run build
 npm start
 ```
 
-Open the URL shown in the log (e.g. http://localhost:9000 if `PORT=9000` in `.env`).
+Open the URL shown in the log (default http://localhost:8000).
 
 ## Scripts
 
@@ -100,13 +102,14 @@ npm start             # Node server (after build)
 ## Repo map
 
 ```
-apps/web/          Svelte SPA
-apps/server/       Node server (SPA + WebSocket)
-packages/room/     Room state machine
-packages/protocol/ Wire envelopes
-docs/              PRD, architecture (some notes reference legacy Cloudflare path)
-qa/                Playwright e2e helpers + evidence
-Dockerfile         Substrait image
+apps/web/              Svelte SPA (built into backend image)
+apps/server/           Node server (SPA + WebSocket)
+cicd/Dockerfile.backend   Substrait backend image
+substrait.yaml         App manifest (description; no database)
+packages/room/         Room state machine
+packages/protocol/     Wire envelopes
+docs/                  PRD, architecture
+qa/                    Playwright e2e helpers + evidence
 ```
 
 More detail: [`docs/local-run.md`](docs/local-run.md) · [`docs/architecture/architecture.md`](docs/architecture/architecture.md)

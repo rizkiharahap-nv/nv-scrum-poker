@@ -26,7 +26,7 @@ npm run build
 npm start
 ```
 
-Open the logged URL (default `http://localhost:8080`, or your `PORT` in `.env`).
+Open the logged URL (default `http://localhost:8000`, or your `PORT` in `.env`).
 
 - Create a room → share invite link → join from incognito.
 - Vote → Reveal → Re-vote; refresh tab to test `room:resume`.

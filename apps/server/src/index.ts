@@ -6,6 +6,7 @@
  */
 
 import { createServer, type IncomingMessage } from "node:http";
+import { Buffer } from "node:buffer";
 import { randomBytes, randomInt } from "node:crypto";
 import { statSync, readFileSync, existsSync } from "node:fs";
 import { extname, join, normalize, dirname } from "node:path";
@@ -147,7 +148,7 @@ function handleCreate(
     });
     return;
   }
-  const participantId = randomBytes(16).toString("base64url");
+  const participantId = Buffer.from(randomBytes(16)).toString("base64url");
   const result = Room.create(
     code,
     participantId,
@@ -185,7 +186,7 @@ function handleJoin(
     ack(ws, id, "room:join", { ok: false, error: { code: "ROOM_NOT_FOUND" } });
     return;
   }
-  const participantId = randomBytes(16).toString("base64url");
+  const participantId = Buffer.from(randomBytes(16)).toString("base64url");
   const result = room.join(
     participantId,
     typeof payload.name === "string" ? payload.name : "",
@@ -334,18 +335,34 @@ const MIME: Record<string, string> = {
   ".woff2": "font/woff2",
 };
 
+function writeHealth(
+  req: IncomingMessage,
+  res: import("node:http").ServerResponse,
+): void {
+  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+  if (req.method === "HEAD") res.end();
+  else res.end("ok");
+}
+
 function handleHttp(
   req: IncomingMessage,
   res: import("node:http").ServerResponse,
 ): void {
   const url = new URL(req.url ?? "/", "http://localhost");
   if (
-    url.pathname === "/healthz" &&
+    (url.pathname === "/health" || url.pathname === "/healthz") &&
     (req.method === "GET" || req.method === "HEAD")
   ) {
-    res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+    writeHealth(req, res);
+    return;
+  }
+  if (
+    url.pathname === "/api/health" &&
+    (req.method === "GET" || req.method === "HEAD")
+  ) {
+    res.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
     if (req.method === "HEAD") res.end();
-    else res.end("ok");
+    else res.end(JSON.stringify({ ok: true }));
     return;
   }
   serveStatic(req, res);
@@ -484,7 +501,7 @@ export function startTestServer(
 
 /** CLI entry (local dev, Substrait container). */
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const port = Number(process.env.PORT ?? 8080);
+  const port = Number(process.env.PORT ?? 8000);
   startTestServer({ port, host: "0.0.0.0" }).then((server) => {
     console.log(`scrum-poker listening on http://0.0.0.0:${server.port}`);
     const shutdown = (): void => {
