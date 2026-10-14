@@ -3,3 +3,7 @@ description: >
   short invite code, vote face-down on story estimates, reveal together, and
   see consensus or the spread. No accounts — display name only; rooms are
   ephemeral live sessions.
+
+# Skill/plugin version this app was last deployed with — stamped by
+# /substrait:deploy; do not edit by hand.
+scaffold_version: 2026.09.22.075110
