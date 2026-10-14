@@ -15,11 +15,15 @@
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.base.json --noEmit && tsc -p apps/server/tsconfig.json --noEmit"
   },
+  "overrides": {
+    "source-map-js": "1.2.2",
+    "undici": "8.12.1"
+  },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
     "@testing-library/svelte": "^5.4.2",
     "@types/node": "^22.20.1",
-    "jsdom": "^30.0.1",
+    "jsdom": "^30.1.2",
     "tsx": "^4.23.12",
     "typescript": "^7.0.2",
     "vitest": "^4.1.10"

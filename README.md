@@ -43,7 +43,7 @@ docker build -f cicd/Dockerfile.backend -t nv-scrum-poker .
 docker run --rm -p 8000:8000 nv-scrum-poker
 ```
 
-Open http://localhost:8000 — same origin serves the SPA and `ws://…/ws`.
+Open http://localhost:8000 — same origin serves the SPA and the WebSocket endpoint `/ws` (browsers use `wss` when the page is served over HTTPS).
 
 | Env | Default | Purpose |
 | --- | --- | --- |

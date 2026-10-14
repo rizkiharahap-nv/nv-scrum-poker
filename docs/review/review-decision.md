@@ -208,7 +208,7 @@ human ship gate.
 |---|---|---|
 | 6-digit format `/^\d{6}$/` | ✅ **PASS** | `token.ts` `formatRoomCode` + 200-draw unit; live do-smoke `roomId=930709` (6 digits). |
 | Rejection-sampling uniformity (no modulo bias) | ✅ **PASS** | `token.ts`: 32-bit draw, reject ≥ 4_294_000_000 (largest multiple of 1M < 2^32), `% 1_000_000`; 50k-sample 10k-bucket spot-check unit (pre-existing ±6σ flake known, product unaffected). |
-| Leading zeros preserved on wire/URL (string, never coerced) | ✅ **PASS** | `formatRoomCode(0)="000000"`, `formatRoomCode(123)="000123"` unit; QA E2E live `/r/069105` + `ws://…/ws?room=069105`. |
+| Leading zeros preserved on wire/URL (string, never coerced) | ✅ **PASS** | `formatRoomCode(0)="000000"`, `formatRoomCode(123)="000123"` unit; QA E2E live `/r/069105` + WebSocket `/ws?room=069105`. |
 | Collision retry ≤5: fresh code + reconnect + generic error | ✅ **PASS** | `Landing.svelte` loop ≤5, `generateRoomCode()` fresh per attempt, `disconnectRoom()` between, generic error + button re-enabled after exhaustion; new `test/dom/room-create-retry.test.ts` 2/2 (fresh-code-per-attempt; exactly 5 attempts, no 6th). |
 | Occupied code never overwrites live room | ✅ **PASS** | `apps/server/src/index.ts:125-127` `rooms.has(code) → ROOM_NOT_FOUND`; test proves join still finds original host. |
 | Security tradeoff documented (PRD + approval log) | ✅ **PASS** | PRD AC-F1.2 + tradeoff paragraph; architecture §5; CR-06 doc; approval log Gate 4 entries. |
